@@ -4,6 +4,7 @@ import dev.voroby.hibernate_reactive.entity.Human
 import dev.voroby.hibernate_reactive.entity.Pet
 import dev.voroby.hibernate_reactive.entity.PetType
 import dev.voroby.hibernate_reactive.repository.HumanRepository
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -13,7 +14,6 @@ import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
-import reactor.core.publisher.Mono
 
 @WebFluxTest(controllers = [Controller::class])
 class ControllerTest {
@@ -26,24 +26,26 @@ class ControllerTest {
 
     @Test
     fun humans() {
-        val human = Human()
-        human.id = 1
-        human.name = "Ivan"
-        human.pets = mutableSetOf(Pet(name = "Shhhii", type = PetType.SNAKE), Pet(name = "Nemo", type = PetType.FISH))
-        Mockito.`when`(humanRepository.findAll()).thenReturn(Mono.just(listOf(human)))
+        runBlocking {
+            val human = Human()
+            human.id = 1
+            human.name = "Ivan"
+            human.pets = mutableSetOf(Pet(name = "Shhhii", type = PetType.SNAKE), Pet(name = "Nemo", type = PetType.FISH))
+            Mockito.`when`(humanRepository.findAll()).thenReturn(listOf(human))
 
-        val responseBody: MutableList<Human>? = webTestClient.get()
-            .uri("/api/human")
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus().isOk
-            .expectBodyList(Human::class.java)
-            .returnResult().responseBody
+            val responseBody: MutableList<Human>? = webTestClient.get()
+                .uri("/api/human/all")
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk
+                .expectBodyList(Human::class.java)
+                .returnResult().responseBody
 
-        Mockito.verify(humanRepository).findAll()
+            Mockito.verify(humanRepository).findAll()
 
-        assertTrue { responseBody!!.size == 1 }
-        assertEquals(human, responseBody!![0])
+            assertTrue { responseBody!!.size == 1 }
+            assertEquals(human, responseBody!![0])
+        }
     }
 
 }

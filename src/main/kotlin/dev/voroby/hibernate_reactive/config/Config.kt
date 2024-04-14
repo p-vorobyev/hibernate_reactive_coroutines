@@ -31,13 +31,12 @@ class Config {
 
     @Bean
     fun sessionFactory(): SessionFactory {
-        onInit()
-        TimeUnit.SECONDS.sleep(3)
+        initContainer()
         val entityManagerFactory: EntityManagerFactory = Persistence.createEntityManagerFactory("my-persistence-unit")
         return entityManagerFactory.unwrap(SessionFactory::class.java)
     }
 
-    fun onInit() {
+    private fun initContainer() {
         val envs = mapOf(
             "POSTGRES_USER" to "user",
             "POSTGRES_PASSWORD" to "password",
@@ -52,6 +51,7 @@ class Config {
             }
             .waitingFor(HostPortWaitStrategy().forPorts(5432))
             .start()
+        TimeUnit.SECONDS.sleep(3) // await database
         log.info("PostgreSQL started")
     }
 
